@@ -71,6 +71,8 @@ Every finding says **what it is, why it matters, and how to fix it**, with a com
 
 The rules are plain Python in [`rathunter.py`](rathunter.py). Read them, argue with them, improve them.
 
+**Tested on a real remote-controlled Mac.** CI runs rathunter on GitHub's macOS build machines, which really are remote-controlled computers. It correctly reports SSH on, SIP off, and provisioning scripts holding Accessibility, Screen Recording and Full Disk Access, all as **review**, with zero false **danger** alarms. ([See the latest run](https://github.com/annapurnageeks/rathunter/actions/workflows/ci.yml).)
+
 ## What it will never do
 
 - **Change anything.** It only reads. The fixes are suggestions you run yourself.
