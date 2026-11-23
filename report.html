@@ -1,0 +1,185 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>rathunter report</title>
+<style>
+  :root {
+    --bg: #0b0d12; --panel: #131720; --panel-2: #1a1f2b; --line: #262c3a; --text: #e8ebf2; --muted: #9099ab;
+    --danger: #ff5d5d; --danger-bg: rgba(255, 93, 93, .12); --warn: #ffb547; --warn-bg: rgba(255, 181, 71, .12);
+    --ok: #3ddc97; --ok-bg: rgba(61, 220, 151, .12); --info: #7aa2ff; --info-bg: rgba(122, 162, 255, .1);
+    --mono: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+    --font: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  }
+  @media (prefers-color-scheme: light) {
+    :root { --bg: #f5f6f9; --panel: #ffffff; --panel-2: #f0f2f6; --line: #dfe3ea; --text: #151923; --muted: #5d667a;
+            --danger: #d92d2d; --danger-bg: rgba(217, 45, 45, .08); --warn: #b86e00; --warn-bg: rgba(255, 170, 0, .12);
+            --ok: #12875a; --ok-bg: rgba(18, 135, 90, .1); --info: #3460d6; --info-bg: rgba(52, 96, 214, .08); }
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--text); font: 15px/1.55 var(--font); -webkit-font-smoothing: antialiased; }
+  main { max-width: 920px; margin: 0 auto; padding: 32px 20px 64px; }
+  header { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 22px; flex-wrap: wrap; }
+  .logo { font-weight: 850; font-size: 20px; letter-spacing: -.02em; display: flex; align-items: center; gap: 10px; }
+  .logo svg { width: 30px; height: 30px; }
+  .meta { color: var(--muted); font-size: 13px; }
+
+  .verdict { border-radius: 18px; padding: 28px; border: 1px solid var(--line); background: var(--panel);
+             display: grid; grid-template-columns: auto 1fr; gap: 22px; align-items: center; position: relative; overflow: hidden; }
+  .verdict::before { content: ""; position: absolute; inset: 0; background: radial-gradient(80% 120% at 0% 0%, var(--tint), transparent 60%); pointer-events: none; }
+  .verdict.danger { --tint: var(--danger-bg); border-color: color-mix(in srgb, var(--danger) 40%, var(--line)); }
+  .verdict.warning { --tint: var(--warn-bg); }
+  .verdict.clean { --tint: var(--ok-bg); }
+  .badge { width: 76px; height: 76px; border-radius: 22px; display: grid; place-items: center; font-size: 38px; position: relative; }
+  .danger .badge { background: var(--danger-bg); color: var(--danger); }
+  .warning .badge { background: var(--warn-bg); color: var(--warn); }
+  .clean .badge { background: var(--ok-bg); color: var(--ok); }
+  .danger .badge::after { content: ""; position: absolute; inset: -6px; border-radius: 26px; border: 2px solid var(--danger); opacity: .5;
+                          animation: pulse 1.8s ease-out infinite; }
+  @keyframes pulse { from { transform: scale(.9); opacity: .6; } to { transform: scale(1.15); opacity: 0; } }
+  .verdict h1 { margin: 0 0 4px; font-size: 28px; line-height: 1.15; letter-spacing: -.02em; position: relative; }
+  .verdict p { margin: 0; color: var(--muted); position: relative; }
+  .counts { display: flex; gap: 8px; margin-top: 14px; flex-wrap: wrap; position: relative; }
+  .count { font-size: 13px; font-weight: 700; padding: 4px 10px; border-radius: 99px; }
+  .count.danger { background: var(--danger-bg); color: var(--danger); }
+  .count.warning { background: var(--warn-bg); color: var(--warn); }
+  .count.info { background: var(--info-bg); color: var(--info); }
+
+  h2 { font-size: 13px; text-transform: uppercase; letter-spacing: .08em; color: var(--muted); margin: 34px 0 12px; }
+  .checks { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 8px; }
+  .check { background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 10px 12px; display: flex;
+           justify-content: space-between; align-items: center; gap: 8px; font-size: 14px; }
+  .check b { font-size: 12px; padding: 2px 8px; border-radius: 99px; white-space: nowrap; }
+  .check b.ok { background: var(--ok-bg); color: var(--ok); }
+  .check b.danger { background: var(--danger-bg); color: var(--danger); }
+  .check b.warning { background: var(--warn-bg); color: var(--warn); }
+  .check b.info { background: var(--info-bg); color: var(--info); }
+
+  .toolbar { display: flex; justify-content: space-between; align-items: center; margin: 34px 0 12px; gap: 10px; flex-wrap: wrap; }
+  .toolbar h2 { margin: 0; }
+  label.toggle { font-size: 14px; color: var(--muted); display: flex; gap: 8px; align-items: center; cursor: pointer; }
+  .group { margin-bottom: 22px; }
+  .group h3 { font-size: 16px; margin: 0 0 8px; }
+  .item { background: var(--panel); border: 1px solid var(--line); border-left: 4px solid var(--edge); border-radius: 12px;
+          padding: 14px 16px; margin-bottom: 8px; }
+  .item.danger { --edge: var(--danger); } .item.warning { --edge: var(--warn); } .item.info { --edge: var(--line); }
+  .item .top { display: flex; gap: 10px; align-items: baseline; flex-wrap: wrap; }
+  .pill { font-size: 11px; font-weight: 800; letter-spacing: .06em; text-transform: uppercase; padding: 2px 8px; border-radius: 6px; }
+  .pill.danger { background: var(--danger-bg); color: var(--danger); }
+  .pill.warning { background: var(--warn-bg); color: var(--warn); }
+  .pill.info { background: var(--info-bg); color: var(--info); }
+  .item .title { font-weight: 700; overflow-wrap: anywhere; }
+  .item .detail { margin: 6px 0 0; }
+  .where { font: 12.5px/1.5 var(--mono); color: var(--muted); margin-top: 6px; overflow-wrap: anywhere; }
+  .fix { margin-top: 10px; background: var(--panel-2); border-radius: 8px; padding: 8px 10px; font-size: 13.5px;
+         display: flex; justify-content: space-between; gap: 10px; align-items: flex-start; }
+  .fix code { font: 12.5px/1.5 var(--mono); white-space: pre-wrap; overflow-wrap: anywhere; }
+  .fix button { flex: none; font: 600 12px var(--font); color: var(--text); background: var(--panel); border: 1px solid var(--line);
+                border-radius: 6px; padding: 4px 8px; cursor: pointer; }
+  .empty { color: var(--muted); background: var(--panel); border: 1px dashed var(--line); border-radius: 12px; padding: 18px; text-align: center; }
+  .sample { background: var(--warn-bg); color: var(--warn); border-radius: 12px; padding: 10px 14px; margin-bottom: 16px; font-weight: 650; font-size: 14px; }
+  footer { margin-top: 40px; color: var(--muted); font-size: 13px; border-top: 1px solid var(--line); padding-top: 16px; }
+  footer a { color: inherit; }
+  @media (max-width: 560px) { .verdict { grid-template-columns: 1fr; } .verdict h1 { font-size: 23px; } }
+</style>
+</head>
+<body>
+<main>
+  <header>
+    <div class="logo">
+      <svg viewBox="0 0 32 32" fill="none" aria-hidden="true"><circle cx="16" cy="16" r="12" stroke="currentColor" stroke-width="2.2"/>
+        <path d="M16 2v6M16 24v6M2 16h6M24 16h6" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/>
+        <circle cx="16" cy="16" r="3.2" fill="#ff5d5d"/></svg>
+      rathunter
+    </div>
+    <div class="meta" id="meta"></div>
+  </header>
+  <div id="sample"></div>
+  <section class="verdict" id="verdict"></section>
+  <h2>What was checked</h2>
+  <div class="checks" id="checks"></div>
+  <div class="toolbar">
+    <h2>Findings</h2>
+    <label class="toggle"><input type="checkbox" id="showInfo"> Show items that look fine</label>
+  </div>
+  <div id="findings"></div>
+  <footer>
+    rathunter only reads: it never changes, deletes or uploads anything. This report was made on your Mac and stays there.
+    Paths inside your home folder are shown as <code>~</code>. ·
+    <a href="https://github.com/annapurnageeks/rathunter">github.com/annapurnageeks/rathunter</a>
+  </footer>
+</main>
+<script>
+const R = /*__RESULT__*/null;
+const $ = (id) => document.getElementById(id);
+const el = (tag, cls, text) => { const e = document.createElement(tag); if (cls) e.className = cls; if (text != null) e.textContent = text; return e; };
+const LABEL = { danger: "Danger", warning: "Review", info: "Info" };
+const ICON = { danger: "!", warning: "?", clean: "✓" };
+
+// Which check produced which category, so the "what was checked" grid can show a count per check.
+const CHECK_CATEGORY = {
+  "Startup items": "Starts automatically", "Login hooks": "Starts automatically", "Scheduled jobs": "Starts automatically",
+  "Terminal startup files": "Starts automatically", "Privacy permissions": "Can watch you", "Remote access": "Can reach in",
+  "Running programs": "Running now", "Network connections": "Running now", "Configuration profiles": "Can read your traffic",
+  "Trusted certificates": "Can read your traffic", "Proxies": "Can read your traffic", "Hosts file": "Can read your traffic",
+  "Browser extensions": "Browser extensions", "System defenses": "Your defenses",
+};
+const ORDER = ["Running now", "Starts automatically", "Can watch you", "Can reach in", "Can read your traffic", "Browser extensions", "Your defenses"];
+
+document.title = `rathunter: ${R.verdict.headline}`;
+$("meta").textContent = `${R.system} · ${new Date(R.scanned_at).toLocaleString()} · v${R.version}`;
+if (R.sample) $("sample").append(el("div", "sample", "Sample report from a test machine with simulated spyware. Nothing here came from a real computer."));
+
+const counts = { danger: 0, warning: 0, info: 0 };
+R.findings.forEach(f => counts[f.severity]++);
+const v = $("verdict"); v.classList.add(R.verdict.level);
+const text = el("div");
+text.append(el("h1", null, R.verdict.headline), el("p", null, R.verdict.summary));
+const chips = el("div", "counts");
+if (counts.danger) chips.append(el("span", "count danger", `${counts.danger} danger`));
+if (counts.warning) chips.append(el("span", "count warning", `${counts.warning} to review`));
+chips.append(el("span", "count info", `${counts.info} info`));
+text.append(chips);
+v.append(el("div", "badge", ICON[R.verdict.level]), text);
+
+R.checked.forEach(name => {
+  const titles = R.findings.filter(f => f.check === name);
+  const worst = titles.find(f => f.severity === "danger") ? "danger" : titles.find(f => f.severity === "warning") ? "warning" : null;
+  const box = el("div", "check"); box.append(el("span", null, name));
+  const n = titles.filter(f => f.severity !== "info").length;
+  const skipped = titles.some(f => f.skipped);
+  box.append(worst ? el("b", worst, `${n} found`) : skipped ? el("b", "info", "skipped") : el("b", "ok", "✓ clear"));
+  $("checks").append(box);
+});
+
+function draw() {
+  const showInfo = $("showInfo").checked, root = $("findings");
+  root.replaceChildren();
+  const shown = R.findings.filter(f => showInfo || f.severity !== "info");
+  if (!shown.length) { root.append(el("div", "empty", "Nothing needs your attention. Tick the box above to see everything that was looked at.")); return; }
+  ORDER.forEach(category => {
+    const items = shown.filter(f => f.category === category);
+    if (!items.length) return;
+    const group = el("section", "group"); group.append(el("h3", null, category));
+    items.forEach(f => {
+      const item = el("article", "item " + f.severity), top = el("div", "top");
+      top.append(el("span", "pill " + f.severity, LABEL[f.severity]), el("span", "title", f.title));
+      item.append(top, el("p", "detail", f.detail));
+      if (f.where) item.append(el("div", "where", "↳ " + f.where));
+      if (f.fix) {
+        const fix = el("div", "fix"), code = el("code", null, f.fix), copy = el("button", null, "Copy");
+        copy.onclick = () => navigator.clipboard.writeText(f.fix).then(() => { copy.textContent = "Copied"; setTimeout(() => copy.textContent = "Copy", 1500); });
+        fix.append(code, copy); item.append(fix);
+      }
+      group.append(item);
+    });
+    root.append(group);
+  });
+}
+$("showInfo").addEventListener("change", draw);
+$("showInfo").checked = counts.danger + counts.warning === 0;
+draw();
+</script>
+</body>
+</html>
